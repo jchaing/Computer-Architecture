@@ -15,6 +15,9 @@ class CPU:
         # Register:
         self.reg = [0] * 8
 
+        # SP initial
+        self.reg[7] = 0xF4
+
         # Pointer:
         self.pc = 0
 
@@ -132,6 +135,9 @@ class CPU:
 
                 self.reg[reg_idx_1] = self.reg[reg_idx_1] * self.reg[reg_idx_2]
 
+            elif IR == 0b10100000:
+                self.alu("ADD", self.ram[self.pc + 1], self.ram[self.pc + 2])
+
             # PRN instruction
             elif IR == 0b01000111:
                 reg_idx = self.ram[self.pc + 1]
@@ -172,6 +178,30 @@ class CPU:
                 # 2. Increment 'SP"
                 self.reg[7] += 1
 
+            # CALL instruction
+            elif IR == 0b01010000:
+                return_address = self.pc + 2
+
+                self.reg[7] -= 1
+
+                SP = self.reg[7]
+                self.ram[SP] = return_address
+
+                reg_idx = self.ram[self.pc + 1]
+
+                subroutine_address = self.reg[reg_idx]
+
+                self.pc = subroutine_address
+
+            # RET instruction
+            elif IR == 0b00010001:
+                SP = self.reg[7]
+                return_address = self.ram[SP]
+
+                self.pc = return_address
+
+                self.reg[7] += 1
+
             # HLT instruction
             elif IR == 0b00000001:
                 self.running = False
@@ -180,7 +210,9 @@ class CPU:
                 print("Unknown Command!")
                 self.running = False
 
-            self.pc += 1 + num_args
+            sets_pc_directly = ((IR >> 4) & 0b0001) == 1
+            if not sets_pc_directly:
+                self.pc += 1 + num_args
 
         # print(self.reg)
         # print(self.ram)
