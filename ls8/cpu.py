@@ -2,6 +2,7 @@
 
 import sys
 
+
 class CPU:
     """Main CPU class."""
 
@@ -61,8 +62,8 @@ class CPU:
         try:
             with open(sys.argv[1]) as f:
                 for line in f:
-                    possible_number = line[:line.find('#')]
-                    if possible_number == '':
+                    possible_number = line[: line.find("#")]
+                    if possible_number == "":
                         continue
 
                     instruction = int(possible_number, 2)
@@ -70,18 +71,17 @@ class CPU:
                     address += 1
 
         except FileNotFoundError:
-            print(f'Error from {sys.argv[0]}: {sys.argv[1]} not found')
+            print(f"Error from {sys.argv[0]}: {sys.argv[1]} not found")
             sys.exit()
-    
-    # load()
 
+    # load()
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        # elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -91,17 +91,21 @@ class CPU:
         from run() if you need help debugging.
         """
 
-        print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
-            #self.fl,
-            #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
-        ), end='')
+        print(
+            f"TRACE: %02X | %02X %02X %02X |"
+            % (
+                self.pc,
+                # self.fl,
+                # self.ie,
+                self.ram_read(self.pc),
+                self.ram_read(self.pc + 1),
+                self.ram_read(self.pc + 2),
+            ),
+            end="",
+        )
 
         for i in range(8):
-            print(" %02X" % self.reg[i], end='')
+            print(" %02X" % self.reg[i], end="")
 
         print()
 
@@ -114,15 +118,12 @@ class CPU:
             # number_to_increase_pc = 1
             num_args = IR >> 6
 
-            # print(num_args)
-
             # LDI instruction
             if IR == 0b10000010:
                 reg_idx = self.ram[self.pc + 1]
                 value = self.ram[self.pc + 2]
 
                 self.reg[reg_idx] = value
-                # self.pc += 2
 
             # MULT instruction
             elif IR == 0b10100010:
@@ -137,7 +138,39 @@ class CPU:
                 value = self.reg[reg_idx]
                 print(value)
 
-                # self.pc += 1
+            # PUSH instruction
+            elif IR == 0b01000101:
+                # 1. Decrement the 'SP'
+                # where is the 'SP'
+                self.reg[7] -= 1
+                print(self.reg)
+                # 2. Copy the value in the given register to the address pointed to by 'SP
+                # get the value from the given register
+                # how to find which register to look at
+                reg_idx = self.ram[self.pc + 1]
+                value = self.reg[reg_idx]
+
+                # How to copy the value to the correct address
+                SP = self.reg[7]
+                self.ram[SP] = value
+
+            # POP instruction
+            elif IR == 0b01000110:
+                # 1. Copy the value from the address pointed to by 'SP'
+                # we need the SP Address
+                SP = self.reg[7]
+
+                # we need the value from that address
+                value = self.ram[SP]
+
+                # we need the register address
+                reg_idx = self.ram[self.pc + 1]
+
+                # then put the value in the register
+                self.reg[reg_idx] = value
+
+                # 2. Increment 'SP"
+                self.reg[7] += 1
 
             # HLT instruction
             elif IR == 0b00000001:
@@ -149,4 +182,5 @@ class CPU:
 
             self.pc += 1 + num_args
 
-        print(self.reg)
+        # print(self.reg)
+        # print(self.ram)
